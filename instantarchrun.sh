@@ -11,8 +11,8 @@ if [ "$(whoami)" = root ]; then
     instantsudo() {
         $@
     }
-    INSTANTARCH="$(/root/instantARCH)"
-    IROOT="$(/root/instantARCH/config)"
+    INSTANTARCH="/root/instantARCH"
+    IROOT="/root/instantARCH/config"
 else
     if ! command -v instantsudo &>/dev/null; then
         instantsudo() {
@@ -20,9 +20,15 @@ else
             sudo $@
         }
     fi
+    [ -e ~/.cache/instantos/iroot ] || mkdir -p ~/.cache/instantos/iroot
+    [ -e ~/.cache/instantos/instantarch ] || mkdir -p ~/.cache/instantos/instantarch
+
     IROOT="$(realpath ~/.cache/instantos/iroot)"
     INSTANTARCH="$(realpath ~/.cache/instantos/instantarch)"
 fi
+
+export IROOT
+export INSTANTARCH
 
 checkinstantarch() {
     if ! [ -e "$INSTANTARCH" ]; then
@@ -44,17 +50,10 @@ if [ "$1" = check ]; then
     exit
 fi
 
-export INSTANTARCH
-export IROOT
-
 instantinstall ripgrep || exit 1
-
-export INSTANTARCH
-export IROOT
 
 case "$1" in
 "ask")
-
     if [ -z "$2" ]; then
         echo "usage: instantarchrun ask questionname"
     fi
@@ -71,11 +70,18 @@ case "$1" in
         echo "usage: instantarchrun run modulename"
         exit 1
     fi
-    if ! [ -e "$INSTANTARCH/$2.sh" ]; then
-        echo "question $2 not found"
+    RUNSCRIPT="$2"
+    if ! grep -q '.sh' <<<"$RUNSCRIPT"; then
+        RUNSCRIPT="$RUNSCRIPT.sh"
+    fi
+    echo "running script $RUNSCRIPT"
+    if ! [ -e "$INSTANTARCH/$RUNSCRIPT" ]; then
+        echo "module $RUNSCRIPT not found"
         exit 1
     fi
     echo "using iroot $IROOT"
-    instantsudo bash -c "instantarchrun check && cd /root/instantARCH && cat iroot.sh > /usr/bin/iroot && git reset --hard && git pull && ./$2"
+    instantsudo bash -c "cd $INSTANTARCH && \
+        cat iroot.sh > /usr/bin/iroot && git reset --hard && git pull && \
+        export INSTANTARCH=$INSTANTARCH && export IROOT=$IROOT && instantarchrun check && bash ./$RUNSCRIPT"
     ;;
 esac
