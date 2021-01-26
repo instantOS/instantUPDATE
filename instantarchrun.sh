@@ -76,6 +76,6 @@ case "$1" in
         exit 1
     fi
     echo "using iroot $IROOT"
-    instantsudo bash -c "instantarchrun check && cd /root/instantARCH && git reset --hard && git pull && ./$2"
+    instantsudo bash -c "instantarchrun check && cd /root/instantARCH && cat iroot.sh > /usr/bin/iroot && git reset --hard && git pull && ./$2"
     ;;
 esac

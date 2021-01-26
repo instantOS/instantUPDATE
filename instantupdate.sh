@@ -67,8 +67,7 @@ if locale 2>&1 | grep -iq 'cannot set'; then
 would you like to apply a fix?' | imenu -C 'locale issue'; then
         echo "repairing locale"
         instantarchrun ask asklocale
-        instantarchrun run locale
-
+        instantarchrun run lang/locale
     fi
 fi
 
