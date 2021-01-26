@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# instantOS updater that keeps software up to date and fixes common breakages
+
 echo "updating instantOS"
 
 if whoami | grep -q '^root$'; then
@@ -18,26 +20,14 @@ leaving it in this state might leave you unable to update' | imenu -C; then
         sudo tee /etc/pacman.d/mirrorlist </usr/share/instantdotfiles/examplemirrors
     fi
 fi
-# TODO: auto repair instantOS repos
 
-sudo pacman -Sy --noconfirm
-# TODO: only run this once every month
-instantshell update
-
-sudo pacman -Syuu --noconfirm
-instantinstall yay
-command -v yay && yay
-instantdotfiles
-
-if ! iconf -i notheming; then
-    instantthemes a arc
+if [ -e /etc/pacman.d/instantmirrorlist ] && grep -q '\[instant\]' /etc/pamac.conf; then
+    echo "instantos mirrors seem to be allright"
+else
+    if imenu -c 'issue with the instantos mirrorlist detected. fix now?'; then
+        instantsudo instantutils repo
+    fi
 fi
-
-sudo bash /usr/share/instantutils/rootinstall.sh
-sudo bash /usr/share/instantdotfiles/rootinstall.sh
-bash /usr/share/instantdotfiles/userinstall.sh
-
-instantinstall pacman-contrib
 
 if grep '..' /etc/pacman.d/mirrorlist | grep -v '^#' | grep -q '..'; then
     echo "mirrors found"
@@ -45,8 +35,6 @@ else
     echo "mirrors have been cleared"
     cat /usr/share/instantdotfiles/examplemirrors | sudo tee /etc/pacman.d/mirrorlist
 fi
-
-# TODO: install some pacnews
 
 if [ -e ~/.cache/yay ] && ! pgrep yay && ! pgrep pacman; then
     echo "checking cache size"
@@ -78,9 +66,38 @@ if locale 2>&1 | grep -iq 'cannot set'; then
     if echo 'empty locale has been detected
 would you like to apply a fix?' | imenu -C 'locale issue'; then
         echo "repairing locale"
-        # TODO
+        instantarchrun ask asklocale
+        instantarchrun run locale
 
     fi
 fi
+
+if idate w manualupdate; then
+    sudo pacman -Sy --noconfirm
+    sudo pacman -Syuu --noconfirm
+fi
+
+if idate m instantshell; then
+    instantshell update
+fi
+
+instantinstall yay
+command -v yay && yay --sudoloop
+instantdotfiles
+
+if idate m applytheming; then
+    if ! iconf -i notheming; then
+        instantthemes a arc
+    fi
+fi
+
+if idate w instantutilsinstall; then
+    sudo bash /usr/share/instantutils/rootinstall.sh
+    sudo bash /usr/share/instantdotfiles/rootinstall.sh
+    bash /usr/share/instantdotfiles/userinstall.sh
+fi
+
+instantinstall pacman-contrib
+# TODO: install some pacnews
 
 echo "finished updating instantOS"

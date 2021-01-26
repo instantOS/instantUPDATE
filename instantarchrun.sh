@@ -29,7 +29,7 @@ checkinstantarch() {
         mkdir -p "${INSTANTARCH%/*}"
         cd "${INSTANTARCH%/*}" || exit 1
         notify-send "fetching instantarch"
-        git clone --depth=1 https://github.com/instantos/instantARCH || exit 1
+        git clone --depth=1 https://github.com/instantos/instantARCH instantarch || exit 1
     fi
     cd "$INSTANTARCH" || exit 1
     [ -e "$IROOT" ] && mkdir -p "$IROOT"
@@ -75,6 +75,7 @@ case "$1" in
         echo "question $2 not found"
         exit 1
     fi
+    echo "using iroot $IROOT"
     instantsudo bash -c "instantarchrun check && cd /root/instantARCH && git reset --hard && git pull && ./$2"
     ;;
 esac
