@@ -8,10 +8,15 @@ if whoami | grep -q '^root$'; then
     echo "please do not run instantupdate as root"
     exit 1
 fi
+
 if ! checkinternet && ! curl -s instantos.io; then
     echo "internet is required to upgrade instantOS"
     exit 1
 fi
+
+################################################
+### scan for issues with package management ####
+################################################
 
 if ! grep -q '^[^#]' /etc/pacman.d/mirrorlist; then
     if echo 'your mirrorlist seems to be broken
@@ -22,7 +27,7 @@ leaving it in this state might leave you unable to update' | imenu -C; then
 fi
 
 if [ -e /etc/pacman.d/instantmirrorlist ] && grep -q '\[instant\]' /etc/pamac.conf; then
-    echo "instantos mirrors seem to be allright"
+    echo "instantos mirrors found"
 else
     if imenu -c 'issue with the instantos mirrorlist detected. fix now?'; then
         instantsudo instantutils repo
@@ -32,9 +37,23 @@ fi
 if grep '..' /etc/pacman.d/mirrorlist | grep -v '^#' | grep -q '..'; then
     echo "mirrors found"
 else
-    echo "mirrors have been cleared"
+    echo "mirrorlist is empty, repairing..."
     cat /usr/share/instantdotfiles/examplemirrors | sudo tee /etc/pacman.d/mirrorlist
 fi
+
+if locale 2>&1 | grep -iq 'cannot set'; then
+    echo "locale seems to be broken"
+    if echo 'empty locale has been detected
+would you like to apply a fix?' | imenu -C 'locale issue'; then
+        echo "repairing locale"
+        instantarchrun ask asklocale
+        instantarchrun run lang/locale
+    fi
+fi
+
+###########################################
+### prevent cache from getting too big ####
+###########################################
 
 if [ -e ~/.cache/yay ] && ! pgrep yay && ! pgrep pacman; then
     echo "checking cache size"
@@ -61,16 +80,6 @@ Would you like to clean it now?" | imenu -C 'cache warning'; then
     fi
 fi
 
-if locale 2>&1 | grep -iq 'cannot set'; then
-    echo "locale seems to be broken"
-    if echo 'empty locale has been detected
-would you like to apply a fix?' | imenu -C 'locale issue'; then
-        echo "repairing locale"
-        instantarchrun ask asklocale
-        instantarchrun run lang/locale
-    fi
-fi
-
 if idate w manualupdate; then
     sudo pacman -Sy --noconfirm
     sudo pacman -Syuu --noconfirm
@@ -81,8 +90,24 @@ if idate m instantshell; then
 fi
 
 instantinstall yay
-command -v yay && yay --sudoloop
+
+if command -v yay; then
+    if yay -Ps 2>&1 | grep -qi 'libalpm.*no such'; then
+        echo 'updated pacman version, falling back to pacman for upgrading'
+        sudo pacman -Syu
+    fi
+    yay --sudoloop
+else
+    echo 'yay not working, using pacman update'
+    sudo pacman -Syu
+fi
+
 instantdotfiles
+
+echo 'updating flatpak'
+if command -v flatpak; then
+    flatpak update -y
+fi
 
 if idate m applytheming; then
     if ! iconf -i notheming; then
@@ -97,6 +122,5 @@ if idate w instantutilsinstall; then
 fi
 
 instantinstall pacman-contrib
-# TODO: install some pacnews
 
 echo "finished updating instantOS"
