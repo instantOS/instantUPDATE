@@ -1,8 +1,12 @@
 #!/bin/bash
 
+# fix pamac version after a pacman update broke it
+
+pamac --version && exit
+
 if pacman -Qi instantdepend; then
     export INSTALLINSTANTDEPEND=true
-    pacman -R instantdepend --noconfirm
+    sudo pacman -R instantdepend --noconfirm
 fi
 
 if pamac 2>&1 | grep -iq "libalpm.*no such"; then
@@ -14,5 +18,5 @@ if pamac 2>&1 | grep -iq "libalpm.*no such"; then
 fi
 
 if [ -n "$INSTALLINSTANTDEPEND" ]; then
-    pacman -S instantdepend --noconfirm
+    sudo pacman -S instantdepend --noconfirm
 fi
