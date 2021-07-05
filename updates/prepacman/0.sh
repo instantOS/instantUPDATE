@@ -14,7 +14,7 @@ if pamac 2>&1 | grep -iq "libalpm.*no such"; then
     sudo pacman -Sy
     sudo pacman -R pamac-all --noconfirm
     sudo pacman -R archlinux-appstream-data --noconfirm
-    sudo pacman -S pamac-all
+    sudo pacman -S pamac-all --noconfirm
 fi
 
 if [ -n "$INSTALLINSTANTDEPEND" ]; then
