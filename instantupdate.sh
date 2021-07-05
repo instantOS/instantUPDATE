@@ -2,6 +2,53 @@
 
 # instantOS updater that keeps software up to date and fixes common breakages
 
+installtriggers() {
+    cd /usr/share/instantupdate/updates/"$1" || return 1
+    if ! [ -e /etc/instantupdate/"$1"version ]; then
+        sudo mkdir -p /etc/instantupdate
+        for i in ./*.sh; do
+            sudo bash "$i"
+            echo "$i" | grep -o '[0-9]*' | sudo tee /etc/instantupdate/"$1"version
+        done
+        return
+    fi
+
+    CURRENTVERSION="$(sudo cat /etc/instantupdate/"$1"version)"
+
+    if ! [ "$CURRENTVERSION" -eq "$CURRENTVERSION" ]; then
+        echo "versioning corrupted, only running last one"
+        LASTONE="$(find . | sort -V | tail -1)"
+        echo "running update trigger $LASTONE"
+        sudo bash "$LASTONE"
+        echo "$LASTONE" | grep -o '[0-9]*' | sudo tee /etc/instantupdate/"$1"version
+        return
+    fi
+
+    COUNTER="$CURRENTVERSION"
+    while :; do
+        if ! [ -e ./"$COUNTER".sh ]; then
+            echo "finished updating to version $COUNTER"
+            break
+        fi
+        echo "running update trigger $COUNTER"
+        sudo bash ./"$COUNTER".sh
+        COUNTER=$((COUNTER + 1))
+        echo "$COUNTER" | grep -o '[0-9]*' | sudo tee /etc/instantupdate/"$1"version
+    done
+
+}
+
+if [ -n "$1" ]; then
+    case "$1" in
+    -h)
+        echo "todo: write a help message"
+        ;;
+    trigger)
+        echo 'running installation triggers for newest version'
+        ;;
+    esac
+fi
+
 echo "updating instantOS"
 
 if whoami | grep -q '^root$'; then
