@@ -1,7 +1,12 @@
 #!/bin/bash
 
-# instantOS updater that keeps software up to date and fixes common breakages
+# instantOS update script that keeps software up to date and fixes common breakages
 
+# each trigger has a version number
+# running installtriggers triggername updates to the newest version
+# updates are incremental:
+# meaning if system is on version n and needs to get updated to version n+10
+# all triggers from n+1, n+2 ... n+10 are run consecutively
 installtriggers() {
     cd /usr/share/instantupdate/updates/"$1" || return 1
     if ! [ -e /etc/instantupdate/"$1"version ]; then
@@ -45,18 +50,19 @@ if [ -n "$1" ]; then
         ;;
     trigger)
         echo 'running installation triggers for newest version'
+        echo 'TODO'
         ;;
     esac
 fi
-
-echo "updating instantOS"
 
 if whoami | grep -q '^root$'; then
     echo "please do not run instantupdate as root"
     exit 1
 fi
 
-if ! checkinternet && ! curl -s instantos.io; then
+echo "updating instantOS"
+
+if ! checkinternet && ! curl -s instantos.io &> /dev/null; then
     echo "internet is required to upgrade instantOS"
     exit 1
 fi
@@ -73,7 +79,7 @@ leaving it in this state might leave you unable to update' | imenu -C; then
     fi
 fi
 
-if [ -e /etc/pacman.d/instantmirrorlist ] && grep -q '\[instant\]' /etc/pamac.conf; then
+if [ -e /etc/pacman.d/instantmirrorlist ] && grep -q '\[instant\]' /etc/pacman.conf; then
     echo "instantos mirrors found"
 else
     if imenu -c 'issue with the instantos mirrorlist detected. fix now?'; then
@@ -127,18 +133,20 @@ Would you like to clean it now?" | imenu -C 'cache warning'; then
     fi
 fi
 
+# run manual db update once a week
 if idate w manualupdate; then
     sudo pacman -Sy --noconfirm
     sudo pacman -Syuu --noconfirm
 fi
 
+# update shell plugins once a month
 if idate m instantshell; then
     instantshell update
 fi
 
 instantinstall yay
 
-if command -v yay; then
+if command -v yay &> /dev/null; then
     if yay -Ps 2>&1 | grep -qi 'libalpm.*no such'; then
         echo 'updated pacman version, falling back to pacman for upgrading'
         sudo pacman -Syu
@@ -152,7 +160,7 @@ fi
 instantdotfiles
 
 echo 'updating flatpak'
-if command -v flatpak; then
+if command -v flatpak &> /dev/null; then
     flatpak update -y
 fi
 
@@ -162,6 +170,7 @@ if idate m applytheming; then
     fi
 fi
 
+# TODO: check if this is really necessary
 if idate w instantutilsinstall; then
     sudo bash /usr/share/instantutils/rootinstall.sh
     sudo bash /usr/share/instantdotfiles/rootinstall.sh
