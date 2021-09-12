@@ -62,7 +62,7 @@ fi
 
 echo "updating instantOS"
 
-if ! checkinternet && ! curl -s instantos.io &> /dev/null; then
+if ! checkinternet && ! curl -s instantos.io &>/dev/null; then
     echo "internet is required to upgrade instantOS"
     exit 1
 fi
@@ -75,7 +75,7 @@ if ! grep -q '^[^#]' /etc/pacman.d/mirrorlist; then
     if echo 'your mirrorlist seems to be broken
 yould you like to repair it?
 leaving it in this state might leave you unable to update' | imenu -C; then
-        sudo tee /etc/pacman.d/mirrorlist </usr/share/instantdotfiles/examplemirrors
+        sudo tee /etc/pacman.d/mirrorlist </usr/share/instantdotfiles/rootconfig/examplemirrors
     fi
 fi
 
@@ -91,7 +91,7 @@ if grep '..' /etc/pacman.d/mirrorlist | grep -v '^#' | grep -q '..'; then
     echo "mirrors found"
 else
     echo "mirrorlist is empty, repairing..."
-    cat /usr/share/instantdotfiles/examplemirrors | sudo tee /etc/pacman.d/mirrorlist
+    cat /usr/share/instantdotfiles/rootconfig/examplemirrors | sudo tee /etc/pacman.d/mirrorlist
 fi
 
 if locale 2>&1 | grep -iq 'cannot set'; then
@@ -146,7 +146,7 @@ fi
 
 instantinstall yay
 
-if command -v yay &> /dev/null; then
+if command -v yay &>/dev/null; then
     if yay -Ps 2>&1 | grep -qi 'libalpm.*no such'; then
         echo 'updated pacman version, falling back to pacman for upgrading'
         sudo pacman -Syu
@@ -160,7 +160,7 @@ fi
 instantdotfiles
 
 echo 'updating flatpak'
-if command -v flatpak &> /dev/null; then
+if command -v flatpak &>/dev/null; then
     flatpak update -y
 fi
 
@@ -174,7 +174,8 @@ fi
 if idate w instantutilsinstall; then
     sudo bash /usr/share/instantutils/rootinstall.sh
     sudo bash /usr/share/instantdotfiles/rootinstall.sh
-    bash /usr/share/instantdotfiles/userinstall.sh
+    cd /usr/share/instantdotfiles/dotfiles || exit 1
+    imosid apply .
 fi
 
 instantinstall pacman-contrib
