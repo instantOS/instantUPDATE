@@ -144,6 +144,11 @@ if idate m instantshell; then
     instantshell update
 fi
 
+if idate m keyring
+then
+    sudo pacman -S archlinux-keyring --noconfirm
+fi
+
 instantinstall yay
 
 if command -v yay &>/dev/null; then
