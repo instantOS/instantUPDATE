@@ -111,7 +111,7 @@ fi
 if [ -e ~/.cache/yay ] && ! pgrep yay && ! pgrep pacman; then
     echo "checking cache size"
 
-    CACHESIZE="$(du -sb ~/.cache/yay)"
+    CACHESIZE="$(du -sb ~/.cache/yay | awk '{print $1}')"
     if [ "$CACHESIZE" -gt 5000000000 ]; then
         echo "cache pretty big"
         if echo "your yay cache has reached a size larger than 5gb.
@@ -144,6 +144,11 @@ fi
 # update shell plugins once a month
 if idate m instantshell; then
     instantshell update
+fi
+
+if idate m keyring
+then
+    sudo pacman -S archlinux-keyring --noconfirm
 fi
 
 instantinstall yay
