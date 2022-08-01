@@ -136,6 +136,8 @@ fi
 # run manual db update once a week
 if idate w manualupdate; then
     sudo pacman -Sy --noconfirm
+    # refresh keyring first. pacman will give it priority automatically
+    sudo pacman -S --needed archlinux-keyring
     sudo pacman -Syuu --noconfirm
 fi
 
