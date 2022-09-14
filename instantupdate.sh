@@ -169,6 +169,7 @@ instantdotfiles
 echo 'updating flatpak'
 if command -v flatpak &>/dev/null; then
     flatpak update -y
+    flatpak uninstall --unused
 fi
 
 if idate m applytheming; then
