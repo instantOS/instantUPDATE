@@ -183,7 +183,6 @@ if idate w instantutilsinstall; then
     sudo bash /usr/share/instantutils/rootinstall.sh
     sudo bash /usr/share/instantdotfiles/rootinstall.sh
     cd /usr/share/instantdotfiles/dotfiles || exit 1
-    imosid apply .
 fi
 
 instantinstall pacman-contrib
